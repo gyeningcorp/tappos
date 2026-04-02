@@ -15,13 +15,13 @@ declare module "next-auth" {
       name?: string | null;
       image?: string | null;
       role: "OWNER" | "MANAGER" | "CASHIER" | "PARTNER";
-      tenantId: string | null;
+      tenantId: string; // empty string "" for PARTNER users
     };
   }
 
   interface User {
     role: "OWNER" | "MANAGER" | "CASHIER" | "PARTNER";
-    tenantId: string | null;
+    tenantId: string; // empty string "" for PARTNER users
   }
 }
 
@@ -29,7 +29,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: "OWNER" | "MANAGER" | "CASHIER" | "PARTNER";
-    tenantId: string | null;
+    tenantId: string; // empty string "" for PARTNER users
   }
 }
 
@@ -76,7 +76,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           image: user.image,
           role: user.role,
-          tenantId: user.tenantId,
+          tenantId: user.tenantId ?? "",
         };
       },
     }),

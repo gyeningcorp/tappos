@@ -13,6 +13,10 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    if (!session.user.tenantId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const order = await db.order.findFirst({
       where: {
         id: params.orderId,

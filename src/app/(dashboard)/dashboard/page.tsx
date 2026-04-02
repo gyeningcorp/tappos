@@ -12,6 +12,7 @@ export default async function DashboardPage() {
   }
 
   const tenantId = session.user.tenantId;
+  if (!tenantId) redirect("/partners/dashboard"); // PARTNER users have no tenantId
   const now = new Date();
   const todayStart = startOfDay(now);
   const todayEnd = endOfDay(now);

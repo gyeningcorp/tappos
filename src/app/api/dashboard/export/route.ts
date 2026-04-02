@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
   }
 
   const tenantId = session.user.tenantId;
+  if (!tenantId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { searchParams } = new URL(request.url);
   const fromParam = searchParams.get("from");
   const toParam = searchParams.get("to");

@@ -23,6 +23,7 @@ export async function POST(req: Request) {
     }
 
     const tenantId = session.user.tenantId;
+  if (!tenantId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const coupon = await db.coupon.findUnique({
       where: {
