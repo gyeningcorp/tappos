@@ -5,7 +5,7 @@ import { POSTerminal } from "@/components/pos/pos-terminal";
 export default async function POSPage() {
   const user = await requireAuth();
 
-  const [categories, products] = await Promise.all([
+  const [categories, products, tenant] = await Promise.all([
     db.category.findMany({
       where: { tenantId: user.tenantId },
       orderBy: { sortOrder: "asc" },
@@ -21,6 +21,12 @@ export default async function POSPage() {
       },
       orderBy: { name: "asc" },
     }),
+    user.tenantId
+      ? db.tenant.findUnique({
+          where: { id: user.tenantId },
+          select: { name: true },
+        })
+      : null,
   ]);
 
   return (
@@ -28,6 +34,8 @@ export default async function POSPage() {
       categories={categories}
       products={products}
       tenantId={user.tenantId}
+      merchantName={tenant?.name ?? "Store"}
+      cashierName={user.name ?? "Cashier"}
     />
   );
 }
