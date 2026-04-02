@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 
@@ -17,22 +17,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default function RegisterPage() {
+export default function PartnerRegisterPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  const [businessName, setBusinessName] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [ref, setRef] = useState("");
-
-  useEffect(() => {
-    const refCode = searchParams.get("ref");
-    if (refCode) setRef(refCode);
-  }, [searchParams]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -51,10 +46,10 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/register", {
+      const res = await fetch("/api/partners/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessName, email, password, ref: ref || undefined }),
+        body: JSON.stringify({ name, email, password, companyName, phone }),
       });
 
       const data = await res.json();
@@ -64,7 +59,6 @@ export default function RegisterPage() {
         return;
       }
 
-      // Sign in automatically after registration
       const signInResult = await signIn("credentials", {
         email,
         password,
@@ -72,10 +66,9 @@ export default function RegisterPage() {
       });
 
       if (signInResult?.error) {
-        // Registration succeeded but auto-login failed; send to login page
         router.push("/login");
       } else {
-        router.push("/onboarding");
+        router.push("/partners/dashboard");
       }
     } catch {
       setError("Something went wrong. Please try again.");
@@ -87,9 +80,9 @@ export default function RegisterPage() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle>Create your account</CardTitle>
+        <CardTitle>Become a TapPOS Partner</CardTitle>
         <CardDescription>
-          Get started with TapPOS for your business
+          Earn commissions by referring merchants to TapPOS
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -101,15 +94,15 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="businessName">Business name</Label>
+            <Label htmlFor="name">Full name</Label>
             <Input
-              id="businessName"
+              id="name"
               type="text"
-              placeholder="My Coffee Shop"
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
+              placeholder="Jane Smith"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               required
-              autoComplete="organization"
+              autoComplete="name"
             />
           </div>
           <div className="space-y-2">
@@ -122,6 +115,29 @@ export default function RegisterPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="companyName">Company name</Label>
+            <Input
+              id="companyName"
+              type="text"
+              placeholder="Acme Payments LLC"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone</Label>
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="(555) 123-4567"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+              autoComplete="tel"
             />
           </div>
           <div className="space-y-2">
@@ -149,14 +165,17 @@ export default function RegisterPage() {
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account..." : "Create account"}
+            {loading ? "Creating partner account..." : "Create partner account"}
           </Button>
         </form>
       </CardContent>
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-primary hover:underline">
+          <Link
+            href="/login"
+            className="font-medium text-primary hover:underline"
+          >
             Sign in
           </Link>
         </p>

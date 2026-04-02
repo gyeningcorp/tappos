@@ -14,22 +14,22 @@ declare module "next-auth" {
       email: string;
       name?: string | null;
       image?: string | null;
-      role: "OWNER" | "MANAGER" | "CASHIER";
-      tenantId: string;
+      role: "OWNER" | "MANAGER" | "CASHIER" | "PARTNER";
+      tenantId: string | null;
     };
   }
 
   interface User {
-    role: "OWNER" | "MANAGER" | "CASHIER";
-    tenantId: string;
+    role: "OWNER" | "MANAGER" | "CASHIER" | "PARTNER";
+    tenantId: string | null;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     id: string;
-    role: "OWNER" | "MANAGER" | "CASHIER";
-    tenantId: string;
+    role: "OWNER" | "MANAGER" | "CASHIER" | "PARTNER";
+    tenantId: string | null;
   }
 }
 

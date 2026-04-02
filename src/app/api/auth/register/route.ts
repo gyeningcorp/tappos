@@ -8,6 +8,7 @@ const registerSchema = z.object({
   businessName: z.string().min(2, "Business name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
+  ref: z.string().optional(),
 });
 
 function slugify(text: string): string {
@@ -22,7 +23,7 @@ function slugify(text: string): string {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { businessName, email, password } = registerSchema.parse(body);
+    const { businessName, email, password, ref } = registerSchema.parse(body);
 
     // Check if user already exists
     const existingUser = await db.user.findUnique({
@@ -48,11 +49,23 @@ export async function POST(req: Request) {
 
     const passwordHash = await hashPassword(password);
 
+    // If a referral code was provided, verify it exists
+    let referredByCode: string | undefined;
+    if (ref) {
+      const partner = await db.partner.findUnique({
+        where: { referralCode: ref },
+      });
+      if (partner) {
+        referredByCode = ref;
+      }
+    }
+
     // Create tenant first, then user (pgbouncer transaction mode doesn't support interactive transactions)
     const tenant = await db.tenant.create({
       data: {
         name: businessName,
         slug,
+        ...(referredByCode && { referredByCode }),
       },
     });
 
