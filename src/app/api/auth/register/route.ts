@@ -93,10 +93,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const e = error as Error;
-    console.error("Registration error:", e);
+    console.error("Registration error:", error);
     return NextResponse.json(
-      { error: "Something went wrong. Please try again.", debug: e.message, code: (e as NodeJS.ErrnoException).code },
+      { error: "Something went wrong. Please try again." },
       { status: 500 }
     );
   }
