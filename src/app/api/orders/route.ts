@@ -162,72 +162,85 @@ export async function POST(req: Request) {
       stripePaymentId = paymentIntent.id;
     }
 
-    // Create order in a transaction
+    // Create order — sequential ops (PgBouncer-safe, no callback transaction)
     const changeGiven =
       paymentMethod === "CASH" && cashReceived != null
         ? cashReceived - total
         : null;
 
-    const order = await db.$transaction(async (tx) => {
-      // Create the order
-      const newOrder = await tx.order.create({
-        data: {
-          orderNumber: generateOrderNumber(),
-          status: "COMPLETED",
-          subtotal,
-          discount,
-          tax,
-          total,
-          paymentMethod,
-          stripePaymentId,
-          cashReceived: paymentMethod === "CASH" ? cashReceived : null,
-          changeGiven,
-          tenantId,
-          userId,
-          couponId,
-          items: {
-            create: items.map((item) => ({
-              productId: item.productId,
-              variantId: item.variantId ?? null,
-              name: item.name,
-              price: item.price,
-              quantity: item.quantity,
-            })),
-          },
+    // Step 1: Create order + items in one atomic Prisma call
+    const order = await db.order.create({
+      data: {
+        orderNumber: generateOrderNumber(),
+        status: "COMPLETED",
+        subtotal,
+        discount,
+        tax,
+        total,
+        paymentMethod,
+        stripePaymentId,
+        cashReceived: paymentMethod === "CASH" ? cashReceived : null,
+        changeGiven,
+        tenantId,
+        userId,
+        couponId,
+        items: {
+          create: items.map((item) => ({
+            productId: item.productId,
+            variantId: item.variantId ?? null,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+          })),
         },
-        include: {
-          items: true,
-        },
-      });
+      },
+      include: {
+        items: true,
+      },
+    });
 
-      // Decrement stock
+    // Step 2: Batch stock decrements + coupon increment (array $transaction — PgBouncer-safe)
+    try {
+      const sideEffects: ReturnType<typeof db.variant.update>[] = [];
+
       for (const item of items) {
         if (item.variantId) {
-          await tx.variant.update({
-            where: { id: item.variantId },
-            data: { stock: { decrement: item.quantity } },
-          });
+          sideEffects.push(
+            db.variant.update({
+              where: { id: item.variantId },
+              data: { stock: { decrement: item.quantity } },
+            })
+          );
         } else {
           const product = productMap.get(item.productId);
           if (product?.trackStock) {
-            await tx.product.update({
-              where: { id: item.productId },
-              data: { stock: { decrement: item.quantity } },
-            });
+            sideEffects.push(
+              db.product.update({
+                where: { id: item.productId },
+                data: { stock: { decrement: item.quantity } },
+              }) as unknown as ReturnType<typeof db.variant.update>
+            );
           }
         }
       }
 
-      // Increment coupon usage
       if (couponId) {
-        await tx.coupon.update({
-          where: { id: couponId },
-          data: { usedCount: { increment: 1 } },
-        });
+        sideEffects.push(
+          db.coupon.update({
+            where: { id: couponId },
+            data: { usedCount: { increment: 1 } },
+          }) as unknown as ReturnType<typeof db.variant.update>
+        );
       }
 
-      return newOrder;
-    });
+      if (sideEffects.length > 0) {
+        await db.$transaction(sideEffects);
+      }
+    } catch (sideEffectError) {
+      // Rollback: delete the order we just created
+      await db.order.delete({ where: { id: order.id } }).catch(() => {});
+      throw sideEffectError;
+    }
 
     return NextResponse.json({
       order: {

@@ -63,6 +63,9 @@ export default function PartnerDashboardPage() {
           setStats(statsData);
           setMerchants(merchantsData.merchants || []);
         })
+        .catch((err) => {
+          console.error("[PartnerDashboard] Failed to load data:", err);
+        })
         .finally(() => setLoading(false));
     }
   }, [status, session, router]);
