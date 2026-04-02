@@ -48,16 +48,17 @@ export async function POST(req: Request) {
 
     const passwordHash = await hashPassword(password);
 
-    // Create tenant and owner user in a transaction
-    const result = await db.$transaction(async (tx) => {
-      const tenant = await tx.tenant.create({
-        data: {
-          name: businessName,
-          slug,
-        },
-      });
+    // Create tenant first, then user (pgbouncer transaction mode doesn't support interactive transactions)
+    const tenant = await db.tenant.create({
+      data: {
+        name: businessName,
+        slug,
+      },
+    });
 
-      const user = await tx.user.create({
+    let user;
+    try {
+      user = await db.user.create({
         data: {
           email,
           passwordHash,
@@ -65,9 +66,13 @@ export async function POST(req: Request) {
           tenantId: tenant.id,
         },
       });
+    } catch (userError) {
+      // Rollback tenant if user creation fails
+      await db.tenant.delete({ where: { id: tenant.id } }).catch(() => {});
+      throw userError;
+    }
 
-      return { tenant, user };
-    });
+    const result = { tenant, user };
 
     return NextResponse.json(
       {
