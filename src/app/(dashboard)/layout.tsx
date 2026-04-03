@@ -16,6 +16,7 @@ import {
   ChevronDown,
   User,
   CreditCard,
+  FlaskConical,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -220,6 +221,24 @@ export default function DashboardLayout({
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
+
+        {/* Demo banner */}
+        {user?.email === "owner@demo.com" && (
+          <div className="flex items-center justify-between gap-3 bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-sm text-amber-800">
+            <div className="flex items-center gap-2">
+              <FlaskConical className="h-4 w-4 shrink-0 text-amber-600" />
+              <span>
+                <strong>You&apos;re in demo mode.</strong> This is a sample account with fake data — nothing here is real.
+              </span>
+            </div>
+            <a
+              href="/register"
+              className="shrink-0 rounded-md bg-amber-600 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-700 transition-colors"
+            >
+              Create your account →
+            </a>
+          </div>
+        )}
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
