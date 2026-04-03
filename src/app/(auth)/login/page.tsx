@@ -17,6 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FaceIDButton } from "@/components/auth/face-id-button";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -187,6 +188,21 @@ export default function LoginPage() {
             ? "Sign in with magic link"
             : "Sign in with password"}
         </Button>
+
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-2 text-muted-foreground">or</span>
+          </div>
+        </div>
+
+        <FaceIDButton
+          mode="login"
+          email={email}
+          onError={(msg) => setError(msg)}
+        />
       </CardContent>
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">

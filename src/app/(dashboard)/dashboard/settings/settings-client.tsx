@@ -3,7 +3,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, CreditCard, Users, Mail } from "lucide-react";
+import { Building2, CreditCard, Users, Mail, Scan } from "lucide-react";
+import { FaceIDButton } from "@/components/auth/face-id-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -208,6 +209,23 @@ export function SettingsClient({
           </div>
         </Card>
       )}
+
+      {/* ── Biometric Login ─────────────────────────────────── */}
+      <Card className="p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Scan className="h-5 w-5 text-indigo-600" />
+          <h2 className="text-lg font-semibold text-gray-900">Face ID / Biometric Login</h2>
+        </div>
+        <p className="text-sm text-gray-500 mb-4">
+          Register your device&apos;s biometric (Face ID, Touch ID, or Windows Hello) for
+          one-tap login. Works on any device you own.
+        </p>
+        <FaceIDButton
+          mode="register"
+          onSuccess={() => {}}
+          onError={() => {}}
+        />
+      </Card>
     </div>
   );
 }

@@ -53,10 +53,12 @@ model User {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
-  orders   Order[]
-  partner  Partner?
+  accounts           Account[]
+  sessions           Session[]
+  orders             Order[]
+  partner            Partner?
+  authenticators     Authenticator[]
+  webauthnChallenge  String?   // temp challenge for in-flight WebAuthn ceremony
 
   @@index([tenantId])
 }
@@ -71,6 +73,22 @@ enum Role {
 enum PartnerStatus {
   ACTIVE
   INACTIVE
+}
+
+// WebAuthn / Passkey credential (Face ID, Touch ID, Windows Hello)
+model Authenticator {
+  id                   String  @id @default(cuid())
+  credentialID         String  @unique  // base64url encoded
+  credentialPublicKey  String  @db.Text // base64url encoded
+  counter              BigInt
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String? // JSON array of transports
+  userId               String
+  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt            DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Account {
